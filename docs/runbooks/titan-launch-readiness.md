@@ -17,3 +17,5 @@ This note is used during Beaconstone launch review to summarize the engineering 
 
 ## Current status
 Launch readiness is improving, but timeout and retry-related changes should be reviewed together when summarizing what shipped or assessing risk.
+
+- Refreshed at 2026-04-17 15:09 AEST to validate demo visibility.
