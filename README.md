@@ -1,2 +1,1 @@
-# titan
-B2B SaaS platform targeting mid-market companies
+@tmp_rovodev_titan/api_seed/README.md
