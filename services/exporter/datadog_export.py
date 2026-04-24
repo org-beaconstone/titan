@@ -72,9 +72,13 @@ class DatadogExporter:
     provides graceful degradation on 429 rate-limit responses (stale cache is
     returned rather than raising :class:`ExportError`).
 
-    The cache is per-instance and not shared across processes. It is suitable
-    for the current single-worker deployment; revisit if Titan moves to a
-    multi-process worker pool. See ADR-0003.
+    .. warning::
+
+        The cache is **per-instance** and not shared across processes. In a
+        multi-process worker deployment, each process warms its own cache
+        independently — a cache hit on one worker does not benefit others.
+        This is acceptable at current scale; revisit with bulk sync (ADR-0003)
+        when a shared cache layer is available.
 
     Args:
         auth_config: A validated :class:`~services.exporter.datadog_auth.DatadogAuthConfig`.
@@ -161,7 +165,8 @@ class DatadogExporter:
         except ExportError:
             cached = self._cache_get(cache_key, ignore_ttl=True)
             if cached is not None:
-                logger.warning("Returning stale cache for dashboard %s after export failure.", dashboard_id)
+                age = time.monotonic() - entry.expires_at + self._cache_ttl
+                logger.warning("Returning stale cache for dashboard %s after export failure (entry is %.0fs old).", dashboard_id, age)
                 return ExportResult(success=True, status_code=200, payload=cached, from_cache=True)
             raise
 
@@ -198,7 +203,8 @@ class DatadogExporter:
         except ExportError:
             cached = self._cache_get(cache_key, ignore_ttl=True)
             if cached is not None:
-                logger.warning("Returning stale cache for monitor %d after export failure.", monitor_id)
+                age = time.monotonic() - entry.expires_at + self._cache_ttl
+                logger.warning("Returning stale cache for monitor %d after export failure (entry is %.0fs old).", monitor_id, age)
                 return ExportResult(success=True, status_code=200, payload=cached, from_cache=True)
             raise
 
@@ -246,7 +252,8 @@ class DatadogExporter:
         except ExportError:
             cached = self._cache_get(cache_key, ignore_ttl=True)
             if cached is not None:
-                logger.warning("Returning stale cache for all_monitors (tags=%s) after export failure.", tags)
+                age = time.monotonic() - entry.expires_at + self._cache_ttl
+                logger.warning("Returning stale cache for all_monitors (tags=%s) after export failure (entry is %.0fs old).", tags, age)
                 return ExportResult(success=True, status_code=200, payload=cached, from_cache=True)
             raise
 
