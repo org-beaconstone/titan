@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 import requests
@@ -157,6 +158,12 @@ class DatadogExporter:
 
         Raises:
             ExportError: On unrecoverable HTTP errors after all retries.
+
+        .. note::
+            Under high job volume this method can exhaust the Datadog API rate limit.
+            TODO: consider caching export results (TTL-based) to reduce Datadog API
+            calls when the same monitor set is requested repeatedly within a short window.
+            See ADR-0003 and the bulk sync spike in feature/datadog-bulk-sync-spike.
         """
         params: dict[str, Any] = {}
         if tags:
@@ -183,24 +190,7 @@ class DatadogExporter:
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> requests.Response:
-        """Execute an authenticated request with exponential-backoff retries.
-
-        Retries on 429 (rate-limited) and 5xx responses up to :data:`_MAX_RETRIES`
-        times. Raises :class:`AuthenticationError` immediately on 401/403.
-
-        Args:
-            method: HTTP method (``"GET"``, ``"POST"``, etc.).
-            path: API path, e.g. ``"/api/v1/monitor/12345"``.
-            params: Optional query parameters.
-            json: Optional request body (serialised as JSON).
-
-        Returns:
-            The final :class:`requests.Response` object.
-
-        Raises:
-            AuthenticationError: On HTTP 401 or 403.
-            ExportError: When all retry attempts are exhausted.
-        """
+        """Execute an authenticated request with exponential-backoff retries."""
         url = f"{self._base_url}{path}"
         last_exc: Exception | None = None
 
@@ -228,7 +218,6 @@ class DatadogExporter:
             if response.ok or response.status_code < 500:
                 return response
 
-            # 5xx — retryable server error
             logger.warning(
                 "Datadog API returned %d (attempt %d/%d); retrying…",
                 response.status_code,
@@ -248,3 +237,94 @@ class DatadogExporter:
             return response.json()
         except Exception:
             return {}
+
+
+@dataclass
+class BulkSyncResult:
+    """Summary of a bulk monitor sync operation.
+
+    Attributes:
+        synced: Number of monitors successfully fetched and stored.
+        failed: Number of monitors that could not be fetched.
+        started_at: UTC timestamp when the sync began.
+        finished_at: UTC timestamp when the sync completed.
+    """
+
+    synced: int
+    failed: int
+    started_at: datetime
+    finished_at: datetime
+
+
+class BulkSyncExporter:
+    """Scheduled bulk exporter that fetches all Datadog monitors at once.
+
+    Designed to run as a nightly cron job, reducing per-request API pressure
+    by pre-fetching all monitors into a local cache or data store.
+
+    .. warning::
+        **Spike / not production-ready.**
+        This class requires a cache layer (e.g. Redis or a DB table) to store
+        results between sync runs. Without a cache, individual jobs still fall
+        back to per-request fetches, defeating the purpose.
+
+        TODO: integrate with a cache store before enabling in production.
+        Deferred in favour of TTL-based in-memory caching — see ADR-0003.
+
+    Args:
+        auth_config: A validated :class:`~services.exporter.datadog_auth.DatadogAuthConfig`.
+        tags: Optional tag filter applied to every sync run.
+    """
+
+    def __init__(
+        self,
+        auth_config: DatadogAuthConfig,
+        tags: list[str] | None = None,
+    ) -> None:
+        self._exporter = DatadogExporter(auth_config)
+        self._tags = tags or []
+
+    def sync_all(self, since: datetime | None = None) -> BulkSyncResult:
+        """Fetch all monitors and return a sync summary.
+
+        Args:
+            since: If provided, only monitors updated after this timestamp are
+                   considered (best-effort — Datadog does not support server-side
+                   delta filtering; this is applied client-side on the response).
+
+        Returns:
+            A :class:`BulkSyncResult` describing what was synced.
+
+        Raises:
+            ExportError: If the underlying API call fails after all retries.
+        """
+        started_at = datetime.now(timezone.utc)
+        result = self._exporter.export_all_monitors(tags=self._tags or None)
+
+        monitors = result.payload.get("monitors", [])
+
+        if since is not None:
+            monitors = [
+                m for m in monitors
+                if datetime.fromisoformat(m.get("modified", "1970-01-01T00:00:00+00:00")) >= since
+            ]
+
+        synced = 0
+        failed = 0
+
+        for monitor in monitors:
+            try:
+                # TODO: persist monitor to cache store here
+                # e.g. cache.set(f"monitor:{monitor['id']}", monitor, ttl=3600)
+                logger.info("Synced monitor %d: %s", monitor["id"], monitor.get("name", "?"))
+                synced += 1
+            except Exception as exc:
+                logger.error("Failed to store monitor %d: %s", monitor.get("id"), exc)
+                failed += 1
+
+        return BulkSyncResult(
+            synced=synced,
+            failed=failed,
+            started_at=started_at,
+            finished_at=datetime.now(timezone.utc),
+        )
