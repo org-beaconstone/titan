@@ -13,7 +13,7 @@ The exporter integrates with the Datadog API v1/v2 to support three categories o
 | Monitor export | Datadog → Titan | `GET /api/v1/monitor/{id}` |
 | All monitors | Datadog → Titan | `GET /api/v1/monitor` |
 
-All operations are authenticated using API key + Application key headers. See [ADR-0002](adr/0002-datadog-export-auth.md) for the auth decision.
+All operations are authenticated using API key + Application key headers. See [ADR-0002](adr/0002-datadog-export-auth.md) for the auth decision and [datadog-auth-examples.md](datadog-auth-examples.md) for setup instructions.
 
 ## Quick start
 
@@ -85,6 +85,7 @@ if result.success:
     dashboard = result.payload
     print(f"Dashboard title: {dashboard['title']}")
     print(f"Widget count: {len(dashboard.get('widgets', []))}")
+    print(f"From cache: {result.from_cache}")
 else:
     print(f"Dashboard export failed (HTTP {result.status_code})")
 ```
@@ -104,6 +105,7 @@ if result.success:
     print(f"Monitor name: {monitor['name']}")
     print(f"Status: {monitor['overall_state']}")
     print(f"Query: {monitor['query']}")
+    print(f"From cache: {result.from_cache}")
 ```
 
 ### Exporting all monitors for a service
@@ -114,13 +116,81 @@ Use `export_all_monitors` with tag filters to scope the export to a specific ser
 result = exporter.export_all_monitors(tags=["service:titan", "env:production"])
 
 monitors = result.payload.get("monitors", [])
-print(f"Found {len(monitors)} monitors")
+print(f"Found {len(monitors)} monitors (from cache: {result.from_cache})")
 
 for m in monitors:
     print(f"  [{m['id']}] {m['name']} — {m['overall_state']}")
 ```
 
 Omit `tags` to retrieve all monitors your App key has access to.
+
+## Caching
+
+`DatadogExporter` caches results from `export_monitor`, `export_all_monitors`, and `export_dashboard` in-process to reduce Datadog API call volume under high job load. This addresses the rate limiting observed at ~200 req/min (see [Issue #19](https://github.com/org-beaconstone/titan/issues/19) and [ADR-0003](adr/0003-datadog-export-strategy.md)).
+
+### TTL configuration
+
+The cache TTL defaults to **300 seconds (5 minutes)**. Configure it at instantiation:
+
+```python
+# Default: 300 s TTL
+exporter = DatadogExporter(config)
+
+# Shorter TTL for more frequent freshness
+exporter = DatadogExporter(config, cache_ttl=60)
+
+# Disable caching entirely
+exporter = DatadogExporter(config, cache_ttl=0)
+```
+
+### Checking whether a result came from cache
+
+```python
+result = exporter.export_monitor(12345)
+if result.from_cache:
+    print("Served from cache — may be up to 5 minutes stale")
+else:
+    print("Fresh from Datadog API")
+```
+
+### Forcing a fresh fetch
+
+Pass `force_refresh=True` to bypass the cache for a single call:
+
+```python
+result = exporter.export_monitor(12345, force_refresh=True)
+result = exporter.export_all_monitors(tags=["service:titan"], force_refresh=True)
+```
+
+### Invalidating the cache
+
+```python
+# Invalidate a single monitor
+exporter.invalidate_cache("monitor:12345")
+
+# Invalidate all-monitors result for a tag set
+exporter.invalidate_cache("all_monitors:env:production,service:titan")
+
+# Clear everything
+exporter.invalidate_cache()
+```
+
+### Graceful degradation on 429
+
+If the Datadog API returns a rate-limit error (429) and all retries are exhausted, the exporter will return a **stale cached result** rather than raising `ExportError` — provided a cache entry exists. This prevents job failures from cascading during API rate-limit windows.
+
+```python
+# If Datadog is rate-limiting but we have a cached result,
+# this returns the cached payload with from_cache=True
+# instead of raising ExportError.
+result = exporter.export_all_monitors(tags=["service:titan"])
+```
+
+If no cached result exists and Datadog is unavailable, `ExportError` is raised as normal.
+
+### Cache scope
+
+The cache is **per-instance** and **not shared across processes**. In a multi-worker deployment, each worker warms its own cache independently. This is acceptable at current traffic levels; see [ADR-0003](adr/0003-datadog-export-strategy.md) for the longer-term bulk sync strategy.
 
 ## Error handling
 
@@ -129,7 +199,7 @@ Omit `tags` to retrieve all monitors your App key has access to.
 | Exception | Cause |
 |-----------|-------|
 | `AuthenticationError` | HTTP 401 or 403 — bad or missing credentials |
-| `ExportError` | Network failure or 5xx after all retries exhausted |
+| `ExportError` | Network failure or 5xx after all retries exhausted (no cache fallback) |
 | `AuthConfigError` | Missing `DATADOG_API_KEY` or `DATADOG_APP_KEY` at startup |
 
 ```python
@@ -156,10 +226,13 @@ The exporter automatically retries on transient failures:
 - **Not retried**: HTTP 401, 403 (raises `AuthenticationError` immediately)
 - **Max attempts**: 3
 - **Backoff**: exponential — `1.5^attempt` seconds (i.e. 1 s, 1.5 s, 2.25 s)
+- **After retries exhausted**: stale cache returned if available; otherwise `ExportError` raised
 
 For budget-aware retry control at the worker level, see [ADR-0001](adr/0001-retry-budget-policy.md).
 
 ## Related
 
 - [ADR-0002: Datadog export auth](adr/0002-datadog-export-auth.md)
+- [ADR-0003: Datadog export strategy](adr/0003-datadog-export-strategy.md)
+- [Datadog auth examples](datadog-auth-examples.md)
 - [Architecture overview](architecture.md)
