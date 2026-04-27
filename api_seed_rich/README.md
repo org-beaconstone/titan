@@ -14,14 +14,13 @@ Titan is organized around three main areas:
 
 ## Repository goals
 
-This repo is useful for exploring questions such as:
+This repository supports the day-to-day engineering workflows required to operate Titan reliably:
 
-- Which pull requests changed timeout or retry behavior?
-- What changed between releases `v2.3.0`, `v2.4.0`, and `v2.4.1`?
-- Where is Datadog authentication documented?
-- What should a new engineer read first?
-- Which open pull requests look risky versus close to merge-ready?
-- What docs and ADRs explain recent architectural decisions?
+- maintaining API retry and timeout behavior
+- running worker backfills and scheduled jobs
+- managing Datadog exporter integrations
+- documenting architectural decisions and operational practices
+- supporting release planning, review, and incident follow-up
 
 ## Directory overview
 
@@ -33,7 +32,7 @@ services/exporter/        Datadog auth and export helpers
 docs/architecture.md      high-level system structure
 docs/guides/              onboarding and task-oriented guides
 docs/adr/                 architectural decision records
-docs/releases/            release summaries used for comparison and release-note queries
+docs/releases/            release summaries and operational delivery notes
 docs/incidents/           operational retrospectives and incident-oriented context
 ```
 
@@ -89,9 +88,9 @@ Representative files:
 - [`docs/datadog-auth-examples.md`](docs/datadog-auth-examples.md)
 - [`docs/datadog-export.md`](docs/datadog-export.md)
 
-## Operational themes represented in this repo
+## Operational focus areas
 
-This repo intentionally includes material around a few recurring engineering themes:
+Titan engineering work is organized around a few recurring operational themes:
 
 ### Retries and timeout control
 Several PRs, issues, and docs focus on retry budgets, timeout tuning, queue polling, and production timeouts. These are meant to support troubleshooting and prioritization workflows.
@@ -107,7 +106,7 @@ Relevant examples:
 CI smoke diagnostics and release diagnostics are represented in both workflow files and historical release changes.
 
 ### Datadog export and authentication
-The repository includes both implementation code and documentation for Datadog authentication and export scenarios so that search can retrieve code, docs, PRs, issues, and release history around the same theme.
+The repository includes both implementation code and documentation for Datadog authentication and export scenarios, helping engineers connect runtime behavior with the supporting design and operational guidance.
 
 ## Development workflow
 
@@ -125,7 +124,7 @@ The repository includes a mix of:
 - blocker comments
 - issue links
 - release tags
-- historical commits with varied timestamps
+- release history and delivery context
 
 ## Review guidance
 
@@ -148,19 +147,19 @@ Titan maintains release history for operational review, customer-support context
 
 These releases are backed by dated commits and release notes so teams can compare changes and understand delivery timelines.
 
-## Example questions this repo should answer well
+## Common engineering tasks
 
-- What shipped in the last 7 days?
-- Which PRs mention Datadog?
-- Is there a branch named `renovate/go-1.x`?
-- What changed between `v2.3.0` and `v2.4.0`?
-- Which PRs are blocked on production validation?
-- Which docs should a new engineer read first?
-- What changes might relate to timeouts or retries?
+Engineers working in Titan commonly use this repository to:
+
+- review recent release changes
+- inspect Datadog exporter behavior
+- investigate timeout and retry changes
+- validate production-readiness notes before merge
+- onboard new engineers through architecture and ADR documentation
 
 ## Local setup
 
-This repository is lightweight by design. For local experimentation:
+For local development and validation:
 
 ```bash
 python3 -m pytest
