@@ -1,1 +1,64 @@
-@tmp_rovodev_titan/api_seed_extra/.tmp_release_ci.yml
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-and-test:
+    name: Lint & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check services/
+
+      - name: Type check (mypy)
+        run: mypy services/
+
+      - name: Run tests
+        run: pytest services/ -v --tb=short
+
+  check-dw-dependency:
+    name: DW-881 dependency guard (TPTL-6)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for DW-881 module flag
+        run: |
+          if grep -rn "_DW_DEPENDENCY = True" services/; then
+            echo ""
+            echo "ERROR: _DW_DEPENDENCY = True detected in services/."
+            echo "This triggers the TPTL-6 no-go condition ahead of the Jul 28 GA date."
+            echo "Contact Liam Estrada or Aoife Burke before merging."
+            echo "See: https://beacon-stone.atlassian.net/browse/TPTL-6"
+            exit 1
+          fi
+          echo "OK: no _DW_DEPENDENCY = True found."
+
+      - name: Check for DW-dependent jobs
+        run: |
+          if grep -rn "dw_dependency=True" services/; then
+            echo ""
+            echo "ERROR: dw_dependency=True detected in services/."
+            echo "DW-dependent jobs are blocked from the queue ahead of the Jul 28 GA date."
+            echo "See TPTL-6: https://beacon-stone.atlassian.net/browse/TPTL-6"
+            exit 1
+          fi
+          echo "OK: no dw_dependency=True found."
