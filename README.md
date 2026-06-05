@@ -34,6 +34,7 @@ docs/guides/              onboarding and task-oriented guides
 docs/adr/                 architectural decision records
 docs/releases/            release summaries and operational delivery notes
 docs/incidents/           operational retrospectives and incident-oriented context
+docs/runbooks/            launch readiness and operational runbooks
 ```
 
 ## Key documents
@@ -45,7 +46,8 @@ Start here if you are new to the codebase:
 3. [docs/architecture.md](docs/architecture.md) — high-level architecture and observability concerns
 4. [docs/adr/0001-retry-budget-policy.md](docs/adr/0001-retry-budget-policy.md) — bounded retry rationale
 5. [docs/adr/0002-datadog-export-auth.md](docs/adr/0002-datadog-export-auth.md) — exporter auth decision
-6. [SECURITY.md](SECURITY.md) — security reporting expectations
+6. [docs/runbooks/titan-launch-readiness.md](docs/runbooks/titan-launch-readiness.md) — launch-readiness checks and operational review notes
+7. [SECURITY.md](SECURITY.md) — security reporting expectations
 
 ## Architecture at a glance
 
