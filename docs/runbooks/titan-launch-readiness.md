@@ -19,3 +19,7 @@ This note is used during Beaconstone launch review to summarize the engineering 
 Launch readiness is improving, but timeout and retry-related changes should be reviewed together when summarizing what shipped or assessing risk.
 
 - Refreshed at 2026-04-17 15:09 AEST to validate demo visibility.
+
+## Handoff checklist
+
+Before handing launch readiness to the next reviewer, capture the latest release note reviewed, any open timeout follow-up, and the Datadog export signal that was used to confirm operational confidence.
