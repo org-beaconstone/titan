@@ -36,6 +36,15 @@ docs/releases/            release summaries and operational delivery notes
 docs/incidents/           operational retrospectives and incident-oriented context
 ```
 
+
+## Current launch activity
+
+Recent July launch-readiness context lives in:
+
+- [Launch readiness update, 2026-07-10](docs/updates/2026-07-10-launch-readiness.md)
+
+Use this note when answering questions about the most recent Titan activity, current launch risk, and follow-up ownership.
+
 ## Key documents
 
 Start here if you are new to the codebase:
