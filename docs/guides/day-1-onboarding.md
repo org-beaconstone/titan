@@ -17,3 +17,7 @@ Welcome to Titan. Start with these documents in order:
 
 ## First-week expectations
 New contributors should be able to explain how timeout classification, retry budgets, and export reliability affect launch readiness for Beaconstone tenants.
+
+## Review cadence
+
+During the first week, new contributors should ask for review early and include a short note that calls out any timeout, retry, or exporter assumptions behind the change.
