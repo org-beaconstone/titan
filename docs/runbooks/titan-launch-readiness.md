@@ -23,3 +23,9 @@ Launch readiness is improving, but timeout and retry-related changes should be r
 ## Handoff checklist
 
 Before handing launch readiness to the next reviewer, capture the latest release note reviewed, any open timeout follow-up, and the Datadog export signal that was used to confirm operational confidence.
+
+## Retry-window validation
+
+For the Jul 16 sprint, engineering should compare the worker backfill elapsed time against onboarding-dashboard timestamps before treating a dry run as healthy. A small gap can be acceptable when the queue is draining normally, but the launch review needs evidence that the gap is not masking delayed retries for priority Beaconstone tenants.
+
+Use the backfill run summary, worker logs, and dashboard refresh time together. Do not use the dashboard timestamp by itself as proof that replay has completed.
