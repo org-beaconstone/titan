@@ -29,3 +29,7 @@ Before handing launch readiness to the next reviewer, capture the latest release
 For the Jul 16 sprint, engineering should compare the worker backfill elapsed time against onboarding-dashboard timestamps before treating a dry run as healthy. A small gap can be acceptable when the queue is draining normally, but the launch review needs evidence that the gap is not masking delayed retries for priority Beaconstone tenants.
 
 Use the backfill run summary, worker logs, and dashboard refresh time together. Do not use the dashboard timestamp by itself as proof that replay has completed.
+
+## Onboarding panel validation
+
+Before launch sign-off, support and engineering should run one retry-path check where the provisioning backend and onboarding status panel are compared after the retry completes. If the panel still shows the old state after refresh, the launch review should decide whether to block, fix, or document the behavior for support.
