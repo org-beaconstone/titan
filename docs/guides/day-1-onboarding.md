@@ -21,3 +21,9 @@ New contributors should be able to explain how timeout classification, retry bud
 ## Review cadence
 
 During the first week, new contributors should ask for review early and include a short note that calls out any timeout, retry, or exporter assumptions behind the change.
+
+## Provisioning status checks
+
+When validating a Beaconstone tenant, compare the onboarding panel with the underlying provisioning record after any retry. If the backend record has moved to a terminal success state but the panel still shows the previous state, refresh the panel before escalating to engineering.
+
+Treat repeated stale status after refresh as a launch-readiness issue because support will use this panel during customer follow-up. Capture the tenant, retry timestamp, backend state, and panel state in the handoff note.
