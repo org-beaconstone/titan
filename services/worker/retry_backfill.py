@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from time import monotonic
 
 from services.api.error_handling import GABlockerError, classify_error
 from services.api.retries import RetryBudget, RetryPolicy, should_retry
@@ -33,6 +34,15 @@ class BackfillResult:
     re_enqueued: int = 0
     skipped: int = 0
     dry_run: bool = False
+    started_at_monotonic: float = field(default_factory=monotonic)
+    finished_at_monotonic: float | None = None
+
+    @property
+    def elapsed_seconds(self) -> float | None:
+        """Duration of the backfill run once it has completed."""
+        if self.finished_at_monotonic is None:
+            return None
+        return self.finished_at_monotonic - self.started_at_monotonic
 
     @property
     def skip_rate(self) -> float:
@@ -119,9 +129,13 @@ class BackfillRunner:
                 logger.error("Failed to re-enqueue job %s: %s", job.id, exc)
                 result.skipped += 1
 
+        result.finished_at_monotonic = monotonic()
         logger.info(
-            "Backfill run complete — re_enqueued=%d, skipped=%d, attempted=%d.",
-            result.re_enqueued, result.skipped, result.attempted,
+            "Backfill run complete — re_enqueued=%d, skipped=%d, attempted=%d, elapsed_seconds=%.2f.",
+            result.re_enqueued,
+            result.skipped,
+            result.attempted,
+            result.elapsed_seconds or 0.0,
         )
         return result
 
