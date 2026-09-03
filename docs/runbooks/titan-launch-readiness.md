@@ -20,6 +20,12 @@ Launch readiness is improving, but timeout and retry-related changes should be r
 
 - Refreshed at 2026-04-17 15:09 AEST to validate demo visibility.
 
+## TPTL-35 rollback-readiness review
+
+For the final Titan GA wave, the launch manager needs a compact recommendation that combines account-sync timeout rate, provisioning queue depth, and retry skip rate. The `services/worker/rollback_readiness.py` helper returns `continue_ga_wave` only when all three signals are within the launch guardrails; otherwise it returns `review_required` with the contributing evidence.
+
+This demo-only change is tracked in `TPTL-35` and requires SRE review before it is used to inform a launch decision.
+
 ## Handoff checklist
 
 Before handing launch readiness to the next reviewer, capture the latest release note reviewed, any open timeout follow-up, and the Datadog export signal that was used to confirm operational confidence.
