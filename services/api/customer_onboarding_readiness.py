@@ -11,11 +11,24 @@ class OnboardingSignal:
     linked_work_items: int
     unlinked_pull_requests: int
     support_note_present: bool
+    # None means Jira blocker status has not been checked, not that it is clear.
+    unresolved_onboarding_blockers: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.linked_work_items < 0 or self.unlinked_pull_requests < 0:
+            raise ValueError("work-item and pull-request counts must be non-negative")
+        if self.unresolved_onboarding_blockers is not None and self.unresolved_onboarding_blockers < 0:
+            raise ValueError("unresolved_onboarding_blockers must be non-negative")
 
 
 def onboarding_needs_follow_up(signal: OnboardingSignal) -> bool:
-    """Return whether a customer needs follow-up before broader onboarding."""
-    return signal.unlinked_pull_requests > 0 or not signal.support_note_present
+    """Require explicit blocker clearance, linked evidence, and a support note."""
+    return (
+        signal.unresolved_onboarding_blockers != 0
+        or signal.linked_work_items <= 0
+        or signal.unlinked_pull_requests > 0
+        or not signal.support_note_present
+    )
 
 
 def onboarding_summary(signal: OnboardingSignal) -> str:

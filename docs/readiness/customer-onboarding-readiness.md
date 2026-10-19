@@ -14,4 +14,9 @@ The readiness decision is not only a GitHub code question. Reviewers need Jira w
 - support note confirming the customer onboarding path
 
 ## Current follow-up
-Beaconstone has linked work items for the core onboarding plan, but unlinked pull requests still need review before the support handoff is complete.
+At the 19 October 2026 review, TPTL-3 was pending and TPTI-266 was blocked. Recheck both in Jira along with unlinked pull requests before support handoff. TPTI-269 tracks the blocker-evidence gate; TPTI-261 tracks the PR review.
+
+## Before a helper can say ready
+- Check the current Jira onboarding blockers and pass an explicit count of unresolved blockers. Missing blocker evidence is not the same as zero blockers
+- Confirm linked work-item coverage, check unlinked pull requests, and record the support handoff note
+- Treat the helper as a review aid only. A ready signal does not replace PM, support, or SRE approval, and it does not assert customer launch sign-off
