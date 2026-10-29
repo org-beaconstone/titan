@@ -33,3 +33,9 @@ Use the backfill run summary, worker logs, and dashboard refresh time together. 
 ## Onboarding panel validation
 
 Before launch sign-off, support and engineering should run one retry-path check where the provisioning backend and onboarding status panel are compared after the retry completes. If the panel still shows the old state after refresh, the launch review should decide whether to block, fix, or document the behavior for support.
+
+## Day-of-launch owner handoff (TPTI-265)
+
+- Engineering and the on-call lead verify the worker replay evidence in TPTL-33, queue and retry diagnostics in TPTI-259, and the provisioning backend versus panel state in TPTI-266. Record the latest evidence and any unresolved blocker before handing off; do not treat a quiet dashboard as proof of sign-off.
+- Support uses TPTL-34 for the operational handoff and TPTL-32 for the customer onboarding question. Confirm the support note reflects any blocker in TPTL-3 and the implementation review in PR #57 before advising broader onboarding.
+- If evidence is missing or the panel and backend disagree, keep the customer answer pending, link the discrepancy to the relevant work item, and return the decision to the engineering/on-call lead and support owner. This checklist records the handoff path, not a launch approval.
