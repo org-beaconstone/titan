@@ -11,4 +11,4 @@ Support and launch reviewers use this checklist before advising broader Titan on
 - Confirm the support FAQ is current
 
 ## Current result
-Beaconstone still needs a support-reviewed onboarding answer. PR #57 is open for PM and support review; an explicit zero unresolved blockers and a support handoff note are required before its helper can report ready. Recheck TPTL-3 and TPTI-266 in Jira before advising broader onboarding.
+Beaconstone still needs a support-reviewed onboarding answer. PR #57 supplies the blocker-evidence helper, but a merged code change is not customer or launch sign-off; an explicit zero unresolved blockers and a support handoff note are required before its helper can report ready. Recheck TPTL-3 and TPTI-266 in Jira before advising broader onboarding.
