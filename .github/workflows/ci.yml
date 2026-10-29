@@ -1,1 +1,19 @@
-@tmp_rovodev_titan/api_seed_extra/.tmp_release_ci.yml
+name: Titan CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run standard-library smoke tests
+        run: python -B -m unittest discover -s tests -v
