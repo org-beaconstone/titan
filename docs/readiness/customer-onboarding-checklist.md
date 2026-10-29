@@ -6,9 +6,9 @@ Support and launch reviewers use this checklist before advising broader Titan on
 ## Checks
 - Confirm onboarding blocker status in TPTL-3
 - Confirm support readiness question in TPTL-32
-- Confirm implementation signals in PR #39
+- Confirm implementation signals and unresolved-blocker evidence in PR #57 and TPTI-269
 - Confirm no unlinked pull requests change the customer answer
 - Confirm the support FAQ is current
 
 ## Current result
-Beaconstone is ready for a support-reviewed onboarding answer once PR #39 has PM and support review.
+Beaconstone still needs a support-reviewed onboarding answer. PR #57 supplies the blocker-evidence helper, but a merged code change is not customer or launch sign-off; an explicit zero unresolved blockers and a support handoff note are required before its helper can report ready. Recheck TPTL-3 and TPTI-266 in Jira before advising broader onboarding.
